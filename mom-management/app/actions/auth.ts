@@ -37,8 +37,15 @@ export async function signup(formData: FormData) {
         });
 
         const cookieStore = await cookies();
-        cookieStore.set('userId', user.StaffID.toString(), { path: '/', httpOnly: true });
-        cookieStore.set('userRole', 'USER', { path: '/', httpOnly: true });
+        const cookieOptions = {
+            path: '/',
+            httpOnly: true,
+            maxAge: 60 * 60 * 24 * 7, // 7 days
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax' as const
+        };
+        cookieStore.set('userId', user.StaffID.toString(), cookieOptions);
+        cookieStore.set('userRole', 'USER', cookieOptions);
     } catch (e) {
         console.error("Signup error:", e);
         return { error: "Failed to create account. Please try again." };
@@ -82,8 +89,15 @@ export async function login(formData: FormData) {
         });
 
         const cookieStore = await cookies();
-        cookieStore.set('userId', user.StaffID.toString(), { path: '/', httpOnly: true });
-        cookieStore.set('userRole', user.Role || 'USER', { path: '/', httpOnly: true });
+        const cookieOptions = {
+            path: '/',
+            httpOnly: true,
+            maxAge: 60 * 60 * 24 * 7, // 7 days
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax' as const
+        };
+        cookieStore.set('userId', user.StaffID.toString(), cookieOptions);
+        cookieStore.set('userRole', user.Role || 'USER', cookieOptions);
 
         targetRole = user.Role || 'USER';
     } catch (e) {
