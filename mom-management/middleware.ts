@@ -5,7 +5,13 @@ import type { NextRequest } from 'next/server';
 const publicRoutes = ['/login', '/signup'];
 
 // Routes that only ADMIN users can access
-const adminOnlyRoutes = ['/master', '/attendance', '/reports'];
+const adminOnlyRoutes = [
+    '/master', 
+    '/attendance', 
+    '/reports',
+    '/meetings/new',
+    '/meetings/edit'
+];
 
 export function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl;
