@@ -1,25 +1,60 @@
+'use client';
+
 import Link from "next/link";
-import { cookies } from 'next/headers';
-import { prisma } from '@/lib/prisma';
-import { redirect } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
-export const dynamic = 'force-dynamic';
+interface User {
+    StaffID: number;
+    StaffName: string;
+    EmailAddress: string | null;
+    MobileNo: string | null;
+    Remarks: string | null;
+    Role: string;
+    Created: Date;
+    Modified: Date;
+}
 
-export default async function ProfilePage() {
-    const cookieStore = await cookies();
-    const userIdCookie = cookieStore.get('userId');
+export default function ProfilePage() {
+    const [user, setUser] = useState<User | null>(null);
+    const [loading, setLoading] = useState(true);
+    const router = useRouter();
 
-    if (!userIdCookie) {
-        redirect('/login');
+    useEffect(() => {
+        const fetchUserData = async () => {
+            try {
+                const response = await fetch('/api/profile');
+                if (response.ok) {
+                    const userData = await response.json();
+                    setUser(userData);
+                } else {
+                    router.push('/login');
+                }
+            } catch (error) {
+                console.error('Error fetching user data:', error);
+                router.push('/login');
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchUserData();
+    }, [router]);
+
+    if (loading) {
+        return (
+            <section className="py-4">
+                <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '50vh' }}>
+                    <div className="spinner-border text-primary" role="status">
+                        <span className="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+            </section>
+        );
     }
 
-    const userId = parseInt(userIdCookie.value);
-    const user = await prisma.staff.findUnique({
-        where: { StaffID: userId }
-    });
-
     if (!user) {
-        redirect('/login');
+        return null;
     }
 
     const isAdmin = user.Role === 'ADMIN';

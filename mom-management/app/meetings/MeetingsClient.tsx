@@ -5,7 +5,7 @@ import ClientDate from '@/components/ClientDate';
 import { cancelMeeting, getMeetings } from '@/app/actions/meetings';
 
 // Define the shape of the data we expect from the server
-interface MeetingWithDetails {
+export interface MeetingWithDetails {
     MeetingID: number;
     MeetingDate: Date;
     MeetingTypeID: number;
@@ -18,8 +18,11 @@ interface MeetingWithDetails {
         MeetingTypeName: string;
     };
     MeetingMember: {
+        MeetingMemberID: number;
+        MeetingID: number;
         StaffID: number;
         IsPresent: boolean;
+        Remarks: string | null;
         Staff: {
             StaffName: string;
         };
@@ -74,7 +77,7 @@ export default function MeetingsClient() {
 
     // Real-time filtered meetings
     const filteredMeetings = useMemo(() => {
-        return initialMeetings.filter(meeting => {
+        return meetings.filter(meeting => {
             // Search filter
             const query = searchQuery.toLowerCase();
             const matchesSearch = !query ||
@@ -98,7 +101,7 @@ export default function MeetingsClient() {
 
             return matchesSearch && matchesStatus && matchesType;
         });
-    }, [initialMeetings, searchQuery, statusFilter, typeFilter]);
+    }, [meetings, searchQuery, statusFilter, typeFilter]);
 
     const handleCancel = async (id: number) => {
         if (!isAdmin) return;
@@ -265,7 +268,7 @@ export default function MeetingsClient() {
                 </div>
                 <div className="card-footer bg-light border-0 py-2">
                     <small className="text-muted">
-                        Showing {filteredMeetings.length} of {initialMeetings.length} meetings.
+                        Showing {filteredMeetings.length} of {meetings.length} meetings.
                     </small>
                 </div>
             </div>
@@ -291,6 +294,7 @@ export default function MeetingsClient() {
                         </div>
                     </div>
                 </div>
+            )}
         </div>
     );
 }

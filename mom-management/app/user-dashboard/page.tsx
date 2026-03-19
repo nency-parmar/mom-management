@@ -1,29 +1,77 @@
-import { getUserMeetings } from '@/app/actions/meetings';
-import { prisma } from '@/lib/prisma';
-import { cookies } from 'next/headers';
-import { redirect } from 'next/navigation';
+'use client';
+
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import ClientDate from '@/components/ClientDate';
 
-export const dynamic = 'force-dynamic';
+interface User {
+    StaffID: number;
+    StaffName: string;
+    EmailAddress: string | null;
+    MobileNo: string | null;
+    Remarks: string | null;
+    Role: string;
+}
 
-export default async function UserDashboard() {
-    const cookieStore = await cookies();
-    const userIdCookie = cookieStore.get('userId');
+interface Meeting {
+    MeetingID: number;
+    MeetingDate: Date;
+    MeetingDescription: string | null;
+    IsCancelled: boolean;
+    MeetingType: {
+        MeetingTypeID: number;
+        MeetingTypeName: string;
+    };
+}
 
-    if (!userIdCookie) {
-        redirect('/login');
+export default function UserDashboard() {
+    const [user, setUser] = useState<User | null>(null);
+    const [meetings, setMeetings] = useState<Meeting[]>([]);
+    const [loading, setLoading] = useState(true);
+    const router = useRouter();
+
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const [userResponse, meetingsResponse] = await Promise.all([
+                    fetch('/api/profile'),
+                    fetch('/api/user-meetings')
+                ]);
+
+                if (userResponse.ok && meetingsResponse.ok) {
+                    const userData = await userResponse.json();
+                    const meetingsData = await meetingsResponse.json();
+                    setUser(userData);
+                    setMeetings(meetingsData);
+                } else {
+                    router.push('/login');
+                }
+            } catch (error) {
+                console.error('Error fetching data:', error);
+                router.push('/login');
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchData();
+    }, [router]);
+
+    if (loading) {
+        return (
+            <div className="py-5" style={{ background: '#f8fafc', minHeight: '100vh' }}>
+                <div className="container d-flex justify-content-center align-items-center" style={{ minHeight: '50vh' }}>
+                    <div className="spinner-border text-primary" role="status">
+                        <span className="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+            </div>
+        );
     }
-
-    const userId = parseInt(userIdCookie.value);
-    const user = await prisma.staff.findUnique({
-        where: { StaffID: userId }
-    });
 
     if (!user) {
-        redirect('/login');
+        return null;
     }
-
-    const meetings = await getUserMeetings(userId);
 
     return (
         <div className="py-5" style={{ background: '#f8fafc', minHeight: '100vh' }}>

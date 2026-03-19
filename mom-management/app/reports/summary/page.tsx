@@ -1,8 +1,56 @@
-import { prisma } from "../../../lib/prisma";
+'use client';
 
-export const dynamic = 'force-dynamic';
+import { useState, useEffect } from 'react';
 
-export default async function Summary() {
+interface SummaryData {
+    totalMeetings: number;
+    completed: number;
+    upcoming: number;
+    cancelled: number;
+    totalStaff: number;
+}
+
+export default function Summary() {
+    const [summary, setSummary] = useState<SummaryData | null>(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchSummary = async () => {
+            try {
+                const response = await fetch('/api/reports/summary');
+                if (response.ok) {
+                    const data = await response.json();
+                    setSummary(data);
+                } else {
+                    console.error('Failed to fetch summary data');
+                }
+            } catch (error) {
+                console.error('Error fetching summary:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchSummary();
+    }, []);
+
+    if (loading) {
+        return (
+            <div className="py-3 py-md-4 d-flex justify-content-center align-items-center" style={{ minHeight: '50vh' }}>
+                <div className="spinner-border text-primary" role="status">
+                    <span className="visually-hidden">Loading...</span>
+                </div>
+            </div>
+        );
+    }
+
+    if (!summary) {
+        return (
+            <div className="py-3 py-md-4 text-center">
+                <p className="text-muted">Failed to load summary data.</p>
+            </div>
+        );
+    }
 
     const headerBlue = {
         backgroundColor: '#0f172a',
@@ -15,32 +63,6 @@ export default async function Summary() {
     };
 
     const accentYellow = '#eab308';
-
-    const totalMeetings = await prisma.meetings.count();
-    const completed = await prisma.meetings.count({
-        where: {
-            MeetingDate: { lt: new Date() },
-            IsCancelled: false
-        }
-    });
-    const upcoming = await prisma.meetings.count({
-        where: {
-            MeetingDate: { gte: new Date() },
-            IsCancelled: false
-        }
-    });
-    const cancelled = await prisma.meetings.count({
-        where: { IsCancelled: true }
-    });
-    const totalStaff = await prisma.staff.count();
-
-    const summary = {
-        totalMeetings,
-        completed,
-        upcoming,
-        cancelled,
-        totalStaff
-    };
 
     return (
         <div className="py-3 py-md-4">
