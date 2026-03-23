@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import ClientDate from '@/components/ClientDate';
-import { cancelMeeting, getMeetings } from '@/app/actions/meetings';
+import { cancelMeeting, getMeetings, deleteMeeting } from '@/app/actions/meetings';
 
 // Define the shape of the data we expect from the server
 export interface MeetingWithDetails {
@@ -29,9 +29,9 @@ export interface MeetingWithDetails {
     }[];
 }
 
-export default function MeetingsClient() {
+export default function MeetingsClient({ initialUserRole }: { initialUserRole: string }) {
     const [meetings, setMeetings] = useState<MeetingWithDetails[]>([]);
-    const [userRole, setUserRole] = useState<string>('USER');
+    const [userRole, setUserRole] = useState<string>(initialUserRole);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -39,13 +39,7 @@ export default function MeetingsClient() {
             try {
                 const meetingsData = await getMeetings();
                 setMeetings(meetingsData);
-                // Get userRole from cookies
-                const cookies = document.cookie.split(';').reduce((acc, cookie) => {
-                    const [key, value] = cookie.trim().split('=');
-                    acc[key] = value;
-                    return acc;
-                }, {} as Record<string, string>);
-                setUserRole(cookies.userRole || 'USER');
+                // No longer reading cookies from document as we get it from initialUserRole prop
             } catch (error) {
                 console.error('Error fetching meetings data:', error);
             } finally {
@@ -110,10 +104,24 @@ export default function MeetingsClient() {
             if (reason) {
                 try {
                     await cancelMeeting(id, reason);
+                    // Use router or direct reload
                     window.location.reload();
                 } catch (error) {
                     alert("Failed to cancel meeting");
                 }
+            }
+        }
+    };
+
+    const handleDelete = async (id: number) => {
+        if (!isAdmin) return;
+        if (confirm("Are you sure you want to PERMANENTLY DELETE this meeting? This cannot be undone.")) {
+            try {
+                await deleteMeeting(id);
+                window.location.reload();
+            } catch (error) {
+                alert("Failed to delete meeting");
+                console.error(error);
             }
         }
     };
@@ -249,12 +257,20 @@ export default function MeetingsClient() {
                                                             <a href={`/meetings/edit/${meeting.MeetingID}`} className="btn btn-outline-secondary btn-sm">Edit</a>
                                                             {!meeting.IsCancelled && (
                                                                 <button
-                                                                    className="btn btn-outline-danger btn-sm"
+                                                                    className="btn btn-outline-warning btn-sm"
                                                                     onClick={() => handleCancel(meeting.MeetingID)}
+                                                                    title="Cancel Meeting"
                                                                 >
                                                                     Cancel
                                                                 </button>
                                                             )}
+                                                            <button
+                                                                className="btn btn-outline-danger btn-sm"
+                                                                onClick={() => handleDelete(meeting.MeetingID)}
+                                                                title="Delete Permanently"
+                                                            >
+                                                                Delete
+                                                            </button>
                                                         </>
                                                     )}
                                                 </div>
@@ -282,7 +298,7 @@ export default function MeetingsClient() {
                             <a href="/meetings/new" className="btn btn-sm" style={{ backgroundColor: primaryBlue, borderColor: primaryBlue, color: "#fff" }}>
                                 + Create New Meeting
                             </a>
-                            <a href="/master/meeting-type" className="btn btn-sm btn-outline-primary">
+                            <a href="/master/meeting_types" className="btn btn-sm btn-outline-primary">
                                 Manage Meeting Types
                             </a>
                             <a href="/master/staff" className="btn btn-sm btn-outline-primary">

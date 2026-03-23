@@ -1,4 +1,4 @@
-import { getMeeting } from '@/app/actions/meetings';
+import { getMeeting, deleteMeeting } from '@/app/actions/meetings';
 import { notFound } from 'next/navigation';
 import ClientDate from '@/components/ClientDate';
 import { cookies } from 'next/headers';

@@ -161,3 +161,15 @@ export async function updateMeeting(meetingId: number, formData: FormData) {
     revalidatePath('/meetings');
     redirect('/meetings');
 }
+
+export async function deleteMeeting(meetingId: number) {
+    try {
+        await prisma.meetings.delete({
+            where: { MeetingID: meetingId }
+        });
+        revalidatePath('/meetings');
+    } catch (error) {
+        console.error("Failed to delete meeting:", error);
+        throw error;
+    }
+}
