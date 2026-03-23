@@ -166,7 +166,12 @@ export default function UserDashboard() {
                                 <a href="/meetings" className="btn btn-light btn-sm rounded-pill px-3 fw-bold">View All</a>
                             </div>
                             <div className="card-body p-0">
-                                {meetings.length === 0 ? (
+                                {loading ? (
+                                    <div className="text-center py-5">
+                                        <div className="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
+                                        <span className="text-muted fw-medium">Fetching your meetings...</span>
+                                    </div>
+                                ) : meetings.length === 0 ? (
                                     <div className="text-center py-5">
                                         <div className="mb-3">
                                             <i className="bi bi-calendar-x text-muted" style={{ fontSize: '3rem' }}></i>

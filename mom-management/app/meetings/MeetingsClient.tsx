@@ -219,7 +219,14 @@ export default function MeetingsClient({ initialUserRole }: { initialUserRole: s
                             </tr>
                         </thead>
                         <tbody>
-                            {filteredMeetings.length === 0 ? (
+                            {loading ? (
+                                <tr>
+                                    <td colSpan={7} className="text-center py-5">
+                                        <div className="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
+                                        <span className="text-muted fw-medium">Fetching meetings...</span>
+                                    </td>
+                                </tr>
+                            ) : filteredMeetings.length === 0 ? (
                                 <tr>
                                     <td colSpan={7} className="text-center py-5 text-muted">
                                         No meetings found matching your filters.
